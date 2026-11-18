@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<assembly manifestVersion="1.0" xmlns="urn:schemas-microsoft-com:asm.v1">
+  <assemblyIdentity version="1.0.0.0" name="Stages.app" />
+
+  <!-- Run with the user's normal rights; Stages never needs administrator access -->
+  <trustInfo xmlns="urn:schemas-microsoft-com:asm.v2">
+    <security>
+      <requestedPrivileges xmlns="urn:schemas-microsoft-com:asm.v3">
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
+      </requestedPrivileges>
+    </security>
+  </trustInfo>
+
+  <!--
+    Sharp text and icons on every monitor ("per-monitor DPI aware, v2"). Without this,
+    a Stage on a second monitor with a different scale (e.g. a 150% laptop screen beside a
+    100% monitor) is drawn at the main monitor's scale and stretched by Windows, so it
+    looks blurry. With it, WPF redraws each window at its own monitor's scale.
+      dpiAwareness (Windows 10 1607+) asks for PerMonitorV2, falling back to PerMonitor;
+      dpiAware true/PM covers older Windows 10, which ignores dpiAwareness.
+    TO UNDO if Stages misbehave on a multi-monitor setup: delete this <application> block
+    and rebuild. Everything goes back to how v0.7.1 behaved.
+  -->
+  <application xmlns="urn:schemas-microsoft-com:asm.v3">
+    <windowsSettings>
+      <dpiAware xmlns="http://schemas.microsoft.com/SMI/2005/WindowsSettings">true/PM</dpiAware>
+      <dpiAwareness xmlns="http://schemas.microsoft.com/SMI/2016/WindowsSettings">PerMonitorV2, PerMonitor</dpiAwareness>
+    </windowsSettings>
+  </application>
+
+  <!-- Declare Windows 10/11 support so Windows doesn't apply legacy compatibility shims -->
+  <compatibility xmlns="urn:schemas-microsoft-com:compatibility.v1">
+    <application>
+      <supportedOS Id="{8e0f7a12-bfb3-4fe8-b9a5-48fd50a15a9a}" />
+    </application>
+  </compatibility>
+</assembly>

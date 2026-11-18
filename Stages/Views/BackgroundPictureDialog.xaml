@@ -1,0 +1,102 @@
+<!--
+  BackgroundPictureDialog.xaml
+  Stage menu > Background > Picture...: choose a picture for one Stage, how it
+  fills the Stage, and how strong, dark and blurred it is. Every change shows
+  on the Stage straight away; Cancel puts the Stage back as it was.
+  Slider limits are set from StageDefaults in the code-behind, not here.
+  Light or dark to match Settings > Appearance > Theme.
+-->
+<Window x:Class="BackgroundPictureDialog"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Background picture"
+        SizeToContent="WidthAndHeight"
+        ResizeMode="NoResize"
+        WindowStartupLocation="CenterOwner"
+        ShowInTaskbar="False"
+        Topmost="True"
+        FontFamily="Segoe UI"
+        Background="{DynamicResource ThemeWindowBackgroundBrush}"
+        Foreground="{DynamicResource ThemePrimaryTextBrush}">
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Stages;component/Themes/SettingsStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <StackPanel Margin="12" Width="340">
+        <!-- Small preview of the chosen picture (or a note when there is none) -->
+        <Border Height="150" BorderThickness="1" BorderBrush="{DynamicResource ThemeSecondaryTextBrush}">
+            <Grid>
+                <Image x:Name="PreviewImage" Stretch="UniformToFill" />
+                <TextBlock x:Name="PreviewNoteText"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" TextWrapping="Wrap" Margin="12"
+                           Foreground="{DynamicResource ThemeSecondaryTextBrush}" />
+            </Grid>
+        </Border>
+
+        <DockPanel Margin="0,8,0,0" LastChildFill="False">
+            <Button x:Name="ChoosePictureButton" DockPanel.Dock="Left" Content="Choose picture..."
+                    Style="{StaticResource SettingsButtonStyle}" Click="ChoosePictureButton_Click" />
+            <Button x:Name="NoPictureButton" DockPanel.Dock="Left" Content="No picture" Margin="8,0,0,0"
+                    Style="{StaticResource SettingsButtonStyle}" Click="NoPictureButton_Click" />
+        </DockPanel>
+        <TextBlock Style="{StaticResource SettingsDescriptionStyle}" Margin="0,6,0,0"
+                   Text="The picture is copied into the Stage's folder, so it stays even if the original is moved or deleted." />
+
+        <!-- How it fills the Stage -->
+        <TextBlock Text="Fit" Style="{StaticResource SettingsRowLabelStyle}" Margin="0,10,0,4" />
+        <StackPanel Orientation="Horizontal">
+            <RadioButton x:Name="FitFillRadio" Content="Fill (crop)" Margin="0,0,14,0"
+                         Style="{StaticResource SettingsRadioButtonStyle}" Checked="FitRadio_Checked" />
+            <RadioButton x:Name="FitWholeRadio" Content="Fit (whole picture)" Margin="0,0,14,0"
+                         Style="{StaticResource SettingsRadioButtonStyle}" Checked="FitRadio_Checked" />
+            <RadioButton x:Name="FitStretchRadio" Content="Stretch"
+                         Style="{StaticResource SettingsRadioButtonStyle}" Checked="FitRadio_Checked" />
+        </StackPanel>
+
+        <!-- Strength, shade and blur, each with its value beside it -->
+        <Grid Style="{StaticResource SettingsRowStyle}" Margin="0,10,0,0">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="80" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="45" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Strength" Style="{StaticResource SettingsRowLabelStyle}" />
+            <Slider x:Name="OpacitySlider" Grid.Column="1" Style="{StaticResource SettingsSliderStyle}"
+                    ValueChanged="PictureSlider_ValueChanged" />
+            <TextBlock x:Name="OpacityValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+        </Grid>
+        <Grid Style="{StaticResource SettingsRowStyle}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="80" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="45" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Shade" Style="{StaticResource SettingsRowLabelStyle}" />
+            <Slider x:Name="ShadeSlider" Grid.Column="1" Style="{StaticResource SettingsSliderStyle}"
+                    ValueChanged="PictureSlider_ValueChanged" />
+            <TextBlock x:Name="ShadeValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+        </Grid>
+        <Grid Style="{StaticResource SettingsRowStyle}">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="80" />
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="45" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Grid.Column="0" Text="Blur" Style="{StaticResource SettingsRowLabelStyle}" />
+            <Slider x:Name="BlurSlider" Grid.Column="1" Style="{StaticResource SettingsSliderStyle}"
+                    ValueChanged="PictureSlider_ValueChanged" />
+            <TextBlock x:Name="BlurValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+        </Grid>
+
+        <DockPanel Margin="0,12,0,0" LastChildFill="False">
+            <Button x:Name="CancelButton" DockPanel.Dock="Right" Content="Cancel" Width="80" IsCancel="True"
+                    Style="{StaticResource SettingsButtonStyle}" />
+            <Button x:Name="OkButton" DockPanel.Dock="Right" Content="OK" Width="80" Margin="0,0,8,0" IsDefault="True"
+                    Style="{StaticResource SettingsButtonStyle}" Click="OkButton_Click" />
+        </DockPanel>
+    </StackPanel>
+</Window>

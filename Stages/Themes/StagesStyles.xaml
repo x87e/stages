@@ -1,0 +1,439 @@
+<!--
+  StagesStyles.xaml
+  Shared colours and control styles for Stages. Merged into each Stage window.
+  Colours reproduce the original NoFences look (semi-transparent black over a
+  blurred desktop, Explorer-style blue hover/selection highlights).
+  Format of colours: #AARRGGBB (AA = opacity, 00 transparent .. FF solid).
+
+  Values marked "(appearance)" are only the starting values: Settings >
+  Appearance changes them for all Stages. StageWindow.ApplyStageAppearance
+  puts the user's values into the window's own resources, which take priority
+  over these, and the styles use {DynamicResource} for them so they update live.
+-->
+<ResourceDictionary xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+                    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+                    xmlns:sys="clr-namespace:System;assembly=mscorlib"
+                    xmlns:local="clr-namespace:Stages">
+
+    <!-- ===== Stage surface ===== -->
+    <!-- The body tint and the imitation-acrylic layers are NOT here: they are user
+         settings (Settings > Appearance), built in code by AppSettings and applied in
+         StageWindow.ApplyBackdropNow. Their built-in defaults are in StageDefaults.vb. -->
+    <!-- Extra darkening of the title bar (NoFences: black at alpha 50) (appearance) -->
+    <SolidColorBrush x:Key="StageTitleBackgroundBrush" Color="#32000000" />
+    <!-- Title text (appearance) -->
+    <SolidColorBrush x:Key="StageTitleForegroundBrush" Color="#FFFFFFFF" />
+    <!-- Font of titles and labels (appearance) -->
+    <FontFamily x:Key="StageFontFamily">Segoe UI</FontFamily>
+    <!-- Outline round the whole Stage (appearance; transparent = none) -->
+    <SolidColorBrush x:Key="StageBorderBrush" Color="#00FFFFFF" />
+
+    <!-- ===== Renaming a Stage in place (double-click its title) ===== -->
+    <SolidColorBrush x:Key="StageTitleEditBackgroundBrush" Color="#B4000000" />
+    <SolidColorBrush x:Key="StageTitleEditBorderBrush" Color="#78FFFFFF" />
+    <Style x:Key="StageTitleEditBoxStyle" TargetType="TextBox">
+        <Setter Property="Foreground" Value="{DynamicResource StageTitleForegroundBrush}" />
+        <Setter Property="CaretBrush" Value="{DynamicResource StageTitleForegroundBrush}" />
+        <Setter Property="Background" Value="{StaticResource StageTitleEditBackgroundBrush}" />
+        <Setter Property="BorderBrush" Value="{StaticResource StageTitleEditBorderBrush}" />
+        <Setter Property="BorderThickness" Value="1" />
+        <Setter Property="FontFamily" Value="{DynamicResource StageFontFamily}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Margin" Value="6,2" />
+    </Style>
+
+    <!-- ===== Tabs in the title bar (a Stage with more than one tab) =====
+         Four looks, chosen in Settings > Appearance > Title and tabs (StageTabStyle). Each
+         tab is a Border; StageWindow.Appearance.vb puts the chosen Style under the key
+         "StageTabHeaderStyle", which the tab template uses as a DynamicResource, so a change
+         shows straight away. "StageTabAccentBrush" (the underline / outline colour) is set
+         there too. In every look the tabs that aren't open are drawn fainter (Opacity), and
+         in the style triggers the open-tab trigger comes last so it wins over hover. -->
+    <SolidColorBrush x:Key="StageTabAccentBrush" Color="#4CC2FF" />
+    <SolidColorBrush x:Key="StageTabHoverBackgroundBrush" Color="#1AFFFFFF" />
+    <SolidColorBrush x:Key="StageTabShadedBackgroundBrush" Color="#3CFFFFFF" />
+    <SolidColorBrush x:Key="StageTabOutlinedBackgroundBrush" Color="#1EFFFFFF" />
+    <!-- How faint a closed tab is (1 = as bright as the open one) -->
+    <sys:Double x:Key="StageTabClosedOpacity">0.7</sys:Double>
+    <sys:Double x:Key="StageTabClosedHoverOpacity">0.9</sys:Double>
+    <sys:Double x:Key="StageTabClearClosedOpacity">0.5</sys:Double>
+
+    <!-- Underline: a 2-pixel line in the tab colour along the bottom of the open tab -->
+    <Style x:Key="StageTabUnderlineStyle" TargetType="Border">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0,0,0,2" />
+        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="Margin" Value="3,0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Opacity" Value="{StaticResource StageTabClosedOpacity}" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource StageTabHoverBackgroundBrush}" />
+                <Setter Property="Opacity" Value="{StaticResource StageTabClosedHoverOpacity}" />
+            </Trigger>
+            <!-- The open tab (StageTabHeader.IsActive) -->
+            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource StageTabAccentBrush}" />
+                <Setter Property="Opacity" Value="1" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Shaded: the open tab is a soft shaded block with rounded top corners, resting on the
+         bottom of the title bar (so it doesn't float like a button) -->
+    <Style x:Key="StageTabShadedStyle" TargetType="Border">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="CornerRadius" Value="4,4,0,0" />
+        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="Margin" Value="1,3,1,0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Opacity" Value="{StaticResource StageTabClosedOpacity}" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource StageTabHoverBackgroundBrush}" />
+                <Setter Property="Opacity" Value="{StaticResource StageTabClosedHoverOpacity}" />
+            </Trigger>
+            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                <Setter Property="Background" Value="{StaticResource StageTabShadedBackgroundBrush}" />
+                <Setter Property="Opacity" Value="1" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Outlined: like Windows' and Visual Studio's tabs - a 2-pixel outline in the tab colour
+         round the open tab's top and sides, open at the bottom where it joins the Stage; the
+         same line then carries on round the rest of the Stage (TabFrameOutline, drawn by
+         StageWindow.TabFrame.vb - keep the two widths the same). The closed tabs have the same
+         (invisible) outline, so nothing shifts when another tab opens. -->
+    <Style x:Key="StageTabOutlinedStyle" TargetType="Border">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderBrush" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="2,2,2,0" />
+        <Setter Property="CornerRadius" Value="4,4,0,0" />
+        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="Margin" Value="1,3,1,0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Opacity" Value="{StaticResource StageTabClosedOpacity}" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource StageTabHoverBackgroundBrush}" />
+                <Setter Property="Opacity" Value="{StaticResource StageTabClosedHoverOpacity}" />
+            </Trigger>
+            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                <Setter Property="BorderBrush" Value="{DynamicResource StageTabAccentBrush}" />
+                <Setter Property="Background" Value="{StaticResource StageTabOutlinedBackgroundBrush}" />
+                <Setter Property="Opacity" Value="1" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- Clear: no marking at all; the open tab is simply brighter than the rest -->
+    <Style x:Key="StageTabClearStyle" TargetType="Border">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Padding" Value="8,0" />
+        <Setter Property="Margin" Value="3,0" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="Opacity" Value="{StaticResource StageTabClearClosedOpacity}" />
+        <Style.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Opacity" Value="{StaticResource StageTabClosedHoverOpacity}" />
+            </Trigger>
+            <DataTrigger Binding="{Binding IsActive}" Value="True">
+                <Setter Property="Opacity" Value="1" />
+            </DataTrigger>
+        </Style.Triggers>
+    </Style>
+
+    <!-- The look used until StageWindow sets the chosen one (the default: Clear) -->
+    <Style x:Key="StageTabHeaderStyle" TargetType="Border" BasedOn="{StaticResource StageTabClearStyle}" />
+
+    <!-- ===== Item highlight colours (NoFences used the Windows system caption colours) ===== -->
+    <SolidColorBrush x:Key="ItemHoverBackgroundBrush" Color="#5099B4D1" />
+    <SolidColorBrush x:Key="ItemSelectedBackgroundBrush" Color="#50D7E4F2" />
+    <SolidColorBrush x:Key="ItemSelectedHoverBackgroundBrush" Color="#64B9D1EA" />
+    <SolidColorBrush x:Key="ItemOutlineBrush" Color="#78B4B4B4" />
+
+    <!-- ===== Item labels: text with a soft dark shadow for readability ===== -->
+    <!-- Label text (appearance) -->
+    <SolidColorBrush x:Key="ItemLabelBrush" Color="#FFFFFFFF" />
+    <SolidColorBrush x:Key="ItemLabelShadowBrush" Color="#B40F0F0F" />
+    <!-- Label size: 12 DIPs = 9pt, as NoFences (appearance) -->
+    <sys:Double x:Key="StageLabelFontSize">12</sys:Double>
+    <!-- Up to two lines of label under an icon (appearance: follows the font size) -->
+    <sys:Double x:Key="StageLabelMaxHeight">35</sys:Double>
+
+    <!-- Opacity of an item whose shortcut target is missing -->
+    <sys:Double x:Key="BrokenItemOpacity">0.45</sys:Double>
+    <sys:String x:Key="BrokenItemToolTip">The file or folder this shortcut points to can't be found</sys:String>
+
+    <!-- ===== Rubber-band selection (drag across empty space) ===== -->
+    <SolidColorBrush x:Key="SelectionBandFillBrush" Color="#3366B3FF" />
+    <SolidColorBrush x:Key="SelectionBandOutlineBrush" Color="#CC66B3FF" />
+
+    <!-- ===== Details view column header ===== -->
+    <SolidColorBrush x:Key="DetailsHeaderTextBrush" Color="#C8FFFFFF" />
+    <SolidColorBrush x:Key="DetailsHeaderLineBrush" Color="#40FFFFFF" />
+    <Style x:Key="DetailsHeaderButtonStyle" TargetType="Button">
+        <Setter Property="Foreground" Value="{StaticResource DetailsHeaderTextBrush}" />
+        <Setter Property="FontFamily" Value="{DynamicResource StageFontFamily}" />
+        <Setter Property="FontSize" Value="11" />
+        <Setter Property="Cursor" Value="Hand" />
+        <Setter Property="HorizontalContentAlignment" Value="Left" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <!-- Just the text, left-aligned unless the heading says otherwise (Size is
+                     right-aligned): clicking it sorts by that column -->
+                <ControlTemplate TargetType="Button">
+                    <Border Background="Transparent" Padding="4,2">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}" VerticalAlignment="Center" />
+                    </Border>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===== Slim scrollbar ===== -->
+    <SolidColorBrush x:Key="ScrollThumbBrush" Color="#96000000" />
+
+    <!-- The draggable part of the scrollbar: a plain rounded bar -->
+    <Style x:Key="SlimScrollBarThumbStyle" TargetType="Thumb">
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="Thumb">
+                    <Border Background="{StaticResource ScrollThumbBrush}" CornerRadius="2" />
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- A 5px wide vertical scrollbar with no arrow buttons (like NoFences' drawn one) -->
+    <Style x:Key="SlimScrollBarStyle" TargetType="ScrollBar">
+        <Setter Property="Width" Value="5" />
+        <Setter Property="MinWidth" Value="5" />
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ScrollBar">
+                    <!-- IsDirectionReversed: vertical tracks count from the top -->
+                    <Track x:Name="PART_Track" Orientation="Vertical" IsDirectionReversed="True">
+                        <Track.Thumb>
+                            <Thumb Style="{StaticResource SlimScrollBarThumbStyle}" />
+                        </Track.Thumb>
+                    </Track>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===== The item list: a ListBox laid out by StageItemsPanel (flow, free or rows) ===== -->
+    <Style x:Key="StageItemsListStyle" TargetType="ListBox">
+        <Setter Property="Background" Value="Transparent" />
+        <Setter Property="BorderThickness" Value="0" />
+        <Setter Property="Padding" Value="8" />
+        <!-- Extended: Ctrl+click and Shift+click select several items -->
+        <Setter Property="SelectionMode" Value="Extended" />
+        <Setter Property="ScrollViewer.HorizontalScrollBarVisibility" Value="Disabled" />
+        <Setter Property="ScrollViewer.VerticalScrollBarVisibility" Value="Auto" />
+        <Setter Property="ItemsPanel">
+            <Setter.Value>
+                <ItemsPanelTemplate>
+                    <local:StageItemsPanel />
+                </ItemsPanelTemplate>
+            </Setter.Value>
+        </Setter>
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBox">
+                    <!-- CanContentScroll=False: smooth pixel scrolling instead of item-by-item -->
+                    <!-- Background (Transparent, from the setter above) matters: without one,
+                         empty space between the icons isn't "hit" by the mouse at all, so a
+                         click there would never reach the list (no selection box, no focus). -->
+                    <ScrollViewer Focusable="False" CanContentScroll="False" Padding="{TemplateBinding Padding}"
+                                  Background="{TemplateBinding Background}">
+                        <ScrollViewer.Resources>
+                            <!-- Any ScrollBar inside this ScrollViewer gets the slim style -->
+                            <Style TargetType="ScrollBar" BasedOn="{StaticResource SlimScrollBarStyle}" />
+                        </ScrollViewer.Resources>
+                        <ItemsPresenter />
+                    </ScrollViewer>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- ===== One item's box: transparent normally, tinted on hover / selection ===== -->
+    <!-- Icon views. Margin + border + padding = 6px on each side of the template;
+         StageWindow's cell sizes allow for exactly this (ItemBoxOverhead). -->
+    <Style x:Key="StageIconContainerStyle" TargetType="ListBoxItem">
+        <Setter Property="Margin" Value="3" />
+        <Setter Property="Padding" Value="2" />
+        <Setter Property="FocusVisualStyle" Value="{x:Null}" />
+        <Setter Property="HorizontalContentAlignment" Value="Center" />
+        <Setter Property="VerticalContentAlignment" Value="Top" />
+        <Setter Property="Template">
+            <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                    <!-- Transparent (not null) background so the whole box responds to the mouse -->
+                    <Border x:Name="ItemBorder"
+                            Background="Transparent"
+                            BorderBrush="Transparent"
+                            BorderThickness="1"
+                            Padding="{TemplateBinding Padding}">
+                        <ContentPresenter HorizontalAlignment="{TemplateBinding HorizontalContentAlignment}"
+                                          VerticalAlignment="{TemplateBinding VerticalContentAlignment}" />
+                    </Border>
+                    <ControlTemplate.Triggers>
+                        <!-- Later triggers win, so the combined state is listed last -->
+                        <Trigger Property="IsMouseOver" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource ItemHoverBackgroundBrush}" />
+                            <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{StaticResource ItemOutlineBrush}" />
+                        </Trigger>
+                        <Trigger Property="IsSelected" Value="True">
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource ItemSelectedBackgroundBrush}" />
+                            <Setter TargetName="ItemBorder" Property="BorderBrush" Value="{StaticResource ItemOutlineBrush}" />
+                        </Trigger>
+                        <MultiTrigger>
+                            <MultiTrigger.Conditions>
+                                <Condition Property="IsSelected" Value="True" />
+                                <Condition Property="IsMouseOver" Value="True" />
+                            </MultiTrigger.Conditions>
+                            <Setter TargetName="ItemBorder" Property="Background" Value="{StaticResource ItemSelectedHoverBackgroundBrush}" />
+                        </MultiTrigger>
+                    </ControlTemplate.Triggers>
+                </ControlTemplate>
+            </Setter.Value>
+        </Setter>
+    </Style>
+
+    <!-- List and Details views: a full-width row -->
+    <Style x:Key="StageRowContainerStyle" TargetType="ListBoxItem" BasedOn="{StaticResource StageIconContainerStyle}">
+        <Setter Property="Margin" Value="0,1" />
+        <Setter Property="Padding" Value="4,0" />
+        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+        <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+
+    <!-- ===== Item label text: centred, up to 2 lines, "..." when too long ===== -->
+    <Style x:Key="StageItemLabelStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource StageFontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource StageLabelFontSize}" />
+        <Setter Property="TextAlignment" Value="Center" />
+        <Setter Property="TextWrapping" Value="Wrap" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="MaxHeight" Value="{DynamicResource StageLabelMaxHeight}" />
+    </Style>
+
+    <!-- One line of text, for the List and Details views -->
+    <Style x:Key="StageRowTextStyle" TargetType="TextBlock">
+        <Setter Property="FontFamily" Value="{DynamicResource StageFontFamily}" />
+        <Setter Property="FontSize" Value="{DynamicResource StageLabelFontSize}" />
+        <Setter Property="TextTrimming" Value="CharacterEllipsis" />
+        <Setter Property="VerticalAlignment" Value="Center" />
+        <Setter Property="Foreground" Value="{DynamicResource ItemLabelBrush}" />
+    </Style>
+
+    <!-- ===== What one item looks like, per view =====
+         Icon views: icon above a shadowed label. The three differ only in icon size and
+         label width; StageWindow's cell sizes match these numbers (see its constants). -->
+    <DataTemplate x:Key="StageLargeIconTemplate">
+        <StackPanel x:Name="ItemRoot" Width="86">
+            <Image Source="{Binding Icon}" Width="48" Height="48" Stretch="Uniform"
+                   HorizontalAlignment="Center" Margin="0,0,0,5" RenderOptions.BitmapScalingMode="HighQuality" />
+            <Grid>
+                <!-- Shadow copy, offset 1.5px down-right, then the real text on top -->
+                <TextBlock Text="{Binding DisplayName}" Style="{StaticResource StageItemLabelStyle}"
+                           Foreground="{StaticResource ItemLabelShadowBrush}" Margin="1.5,1.5,0,0" />
+                <TextBlock Text="{Binding DisplayName}" Style="{StaticResource StageItemLabelStyle}"
+                           Foreground="{DynamicResource ItemLabelBrush}" Margin="0,0,1.5,1.5" />
+            </Grid>
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <!-- Shortcut whose target is gone: dim it and explain why on hover -->
+            <DataTrigger Binding="{Binding IsBroken}" Value="True">
+                <Setter TargetName="ItemRoot" Property="Opacity" Value="{StaticResource BrokenItemOpacity}" />
+                <Setter TargetName="ItemRoot" Property="ToolTip" Value="{StaticResource BrokenItemToolTip}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <DataTemplate x:Key="StageMediumIconTemplate">
+        <StackPanel x:Name="ItemRoot" Width="75">
+            <Image Source="{Binding Icon}" Width="32" Height="32" Stretch="Uniform"
+                   HorizontalAlignment="Center" Margin="0,0,0,5" RenderOptions.BitmapScalingMode="HighQuality" />
+            <Grid>
+                <TextBlock Text="{Binding DisplayName}" Style="{StaticResource StageItemLabelStyle}"
+                           Foreground="{StaticResource ItemLabelShadowBrush}" Margin="1.5,1.5,0,0" />
+                <TextBlock Text="{Binding DisplayName}" Style="{StaticResource StageItemLabelStyle}"
+                           Foreground="{DynamicResource ItemLabelBrush}" Margin="0,0,1.5,1.5" />
+            </Grid>
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsBroken}" Value="True">
+                <Setter TargetName="ItemRoot" Property="Opacity" Value="{StaticResource BrokenItemOpacity}" />
+                <Setter TargetName="ItemRoot" Property="ToolTip" Value="{StaticResource BrokenItemToolTip}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <DataTemplate x:Key="StageSmallIconTemplate">
+        <StackPanel x:Name="ItemRoot" Width="70">
+            <Image Source="{Binding Icon}" Width="16" Height="16" Stretch="Uniform"
+                   HorizontalAlignment="Center" Margin="0,0,0,3" RenderOptions.BitmapScalingMode="HighQuality" />
+            <Grid>
+                <TextBlock Text="{Binding DisplayName}" Style="{StaticResource StageItemLabelStyle}"
+                           Foreground="{StaticResource ItemLabelShadowBrush}" Margin="1.5,1.5,0,0" />
+                <TextBlock Text="{Binding DisplayName}" Style="{StaticResource StageItemLabelStyle}"
+                           Foreground="{DynamicResource ItemLabelBrush}" Margin="0,0,1.5,1.5" />
+            </Grid>
+        </StackPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsBroken}" Value="True">
+                <Setter TargetName="ItemRoot" Property="Opacity" Value="{StaticResource BrokenItemOpacity}" />
+                <Setter TargetName="ItemRoot" Property="ToolTip" Value="{StaticResource BrokenItemToolTip}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- List view: small icon, then the name on one line -->
+    <DataTemplate x:Key="StageListTemplate">
+        <DockPanel x:Name="ItemRoot" LastChildFill="True">
+            <Image DockPanel.Dock="Left" Source="{Binding Icon}" Width="16" Height="16" Stretch="Uniform"
+                   Margin="0,0,6,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
+            <TextBlock Text="{Binding DisplayName}" Style="{StaticResource StageRowTextStyle}" />
+        </DockPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsBroken}" Value="True">
+                <Setter TargetName="ItemRoot" Property="Opacity" Value="{StaticResource BrokenItemOpacity}" />
+                <Setter TargetName="ItemRoot" Property="ToolTip" Value="{StaticResource BrokenItemToolTip}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+    <!-- Details view: icon + name | type | date modified | size, in the order and with the
+         columns the tab has chosen. DetailsColumnsPanel places each child in its column
+         (and hides the hidden ones), using the same widths as the headings above the items
+         (StageWindow.xaml), so values sit under their headings. -->
+    <DataTemplate x:Key="StageDetailsTemplate">
+        <local:DetailsColumnsPanel x:Name="ItemRoot">
+            <DockPanel local:DetailsColumnsPanel.Column="Name" LastChildFill="True">
+                <Image DockPanel.Dock="Left" Source="{Binding Icon}" Width="16" Height="16" Stretch="Uniform"
+                       Margin="0,0,6,0" VerticalAlignment="Center" RenderOptions.BitmapScalingMode="HighQuality" />
+                <TextBlock Text="{Binding DisplayName}" Style="{StaticResource StageRowTextStyle}" />
+            </DockPanel>
+            <TextBlock local:DetailsColumnsPanel.Column="Type" Text="{Binding TypeName}" Style="{StaticResource StageRowTextStyle}" />
+            <TextBlock local:DetailsColumnsPanel.Column="DateModified" Text="{Binding ModifiedDisplay}" Style="{StaticResource StageRowTextStyle}" />
+            <TextBlock local:DetailsColumnsPanel.Column="Size" Text="{Binding SizeDisplay}" Style="{StaticResource StageRowTextStyle}"
+                       TextAlignment="Right" Padding="0,0,4,0" />
+        </local:DetailsColumnsPanel>
+        <DataTemplate.Triggers>
+            <DataTrigger Binding="{Binding IsBroken}" Value="True">
+                <Setter TargetName="ItemRoot" Property="Opacity" Value="{StaticResource BrokenItemOpacity}" />
+                <Setter TargetName="ItemRoot" Property="ToolTip" Value="{StaticResource BrokenItemToolTip}" />
+            </DataTrigger>
+        </DataTemplate.Triggers>
+    </DataTemplate>
+
+</ResourceDictionary>

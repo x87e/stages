@@ -1,0 +1,1104 @@
+<!--
+  SettingsWindow.xaml
+  The Settings window: page names on the left, the chosen page's settings on
+  the right (scrolls when the page is taller than the window).
+
+  Opened from: the tray icon (double-click, or right-click > Open Settings) and
+  a Stage's right-click menu (Settings...). Only one copy is ever open - see
+  SettingsWindow.ShowSettings.
+
+  Every change is applied to the Stages straight away and saved automatically,
+  so there is no OK/Apply button. All behaviour lives in SettingsWindow.xaml.vb;
+  slider limits are set there from StageDefaults rather than written here.
+
+  Pages are plain StackPanels; the code-behind shows the one whose position
+  matches the selected entry in the navigation list (General = 0, Appearance = 1,
+  Items = 2, Desktop = 3, Backup = 4, Install = 5, About = 6).
+
+  Note: in VB WPF projects x:Class omits the root namespace ("Stages").
+-->
+<Window x:Class="SettingsWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Stages Settings"
+        Width="800" Height="580"
+        MinWidth="620" MinHeight="420"
+        WindowStartupLocation="CenterScreen"
+        ShowInTaskbar="True"
+        Icon="/Stages;component/Resources/Stages.ico"
+        FontFamily="Segoe UI"
+        FontSize="13"
+        Foreground="{DynamicResource ThemePrimaryTextBrush}"
+        Activated="Window_Activated"
+        Closed="Window_Closed">
+
+    <Window.Resources>
+        <ResourceDictionary>
+            <ResourceDictionary.MergedDictionaries>
+                <ResourceDictionary Source="/Stages;component/Themes/SettingsStyles.xaml" />
+            </ResourceDictionary.MergedDictionaries>
+        </ResourceDictionary>
+    </Window.Resources>
+
+    <!-- Colours come from the theme (Settings > Appearance > Theme) via DynamicResource,
+         so the whole window repaints when the theme changes. -->
+    <Grid Background="{DynamicResource ThemeWindowBackgroundBrush}">
+        <Grid.ColumnDefinitions>
+            <!-- Column 0: navigation -->
+            <ColumnDefinition Width="200" />
+            <!-- Column 1: the selected page -->
+            <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <!-- Row 0: pages -->
+            <RowDefinition Height="*" />
+            <!-- Row 1: footer with the Close button -->
+            <RowDefinition Height="Auto" />
+        </Grid.RowDefinitions>
+
+        <!-- ================= Navigation ================= -->
+        <Border Grid.Column="0" Grid.RowSpan="2" Background="{DynamicResource ThemeNavBackgroundBrush}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top"
+                           Text="Settings"
+                           FontSize="15"
+                           FontWeight="SemiBold"
+                           Foreground="{DynamicResource ThemePrimaryTextBrush}"
+                           Margin="20,22,0,14" />
+                <ListBox x:Name="SectionList"
+                         Style="{StaticResource SettingsNavListStyle}"
+                         ItemContainerStyle="{StaticResource SettingsNavItemStyle}"
+                         SelectionChanged="SectionList_SelectionChanged">
+                    <ListBoxItem Content="General" />
+                    <ListBoxItem Content="Appearance" />
+                    <ListBoxItem Content="Items" />
+                    <ListBoxItem Content="Desktop" />
+                    <ListBoxItem Content="Backup" />
+                    <ListBoxItem Content="Install" />
+                    <ListBoxItem Content="About" />
+                </ListBox>
+            </DockPanel>
+        </Border>
+
+        <!-- ================= Pages ================= -->
+        <ScrollViewer x:Name="PageScroller"
+                      Grid.Column="1" Grid.Row="0"
+                      VerticalScrollBarVisibility="Auto"
+                      HorizontalScrollBarVisibility="Disabled">
+            <ScrollViewer.Resources>
+                <!-- Any ScrollBar in here gets the slim, theme-coloured style -->
+                <Style TargetType="ScrollBar" BasedOn="{StaticResource SettingsScrollBarStyle}" />
+            </ScrollViewer.Resources>
+            <Grid Margin="28,22,28,12" MaxWidth="760" HorizontalAlignment="Stretch">
+
+                <!-- ===== General ===== -->
+                <StackPanel x:Name="GeneralPage">
+                    <TextBlock Text="General" Style="{StaticResource SettingsPageTitleStyle}" />
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Startup" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <CheckBox x:Name="StartWithWindowsCheckBox"
+                                      Content="Start Stages when I sign in to Windows"
+                                      Style="{StaticResource SettingsCheckBoxStyle}"
+                                      Click="StartWithWindowsCheckBox_Click" />
+                            <!-- Which Stages.exe Windows will start; filled in by the code -->
+                            <TextBlock x:Name="StartupProgramText"
+                                       Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="20,0,0,0" />
+                            <TextBlock x:Name="StartupPathMismatchWarning"
+                                       Style="{StaticResource SettingsWarningStyle}"
+                                       Margin="20,0,0,0"
+                                       Visibility="Collapsed"
+                                       Text="Windows is set to start a different copy of Stages.exe from the one running now. Untick and tick the box to point it at this one." />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- The tray icon can be switched off (Program.ApplyTrayIconSetting); Quit is here
+                         too, because without the icon this is the obvious place to look for it. -->
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Notification area" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <CheckBox x:Name="ShowTrayIconCheckBox"
+                                      Content="Show the Stages icon in the notification area"
+                                      Style="{StaticResource SettingsCheckBoxStyle}"
+                                      Click="ShowTrayIconCheckBox_Click" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="20,0,0,0"
+                                       Text="Without the icon, Stages keeps running as usual. To open Settings, right-click any Stage &gt; Settings..., or start Stages again from the Start menu (that also brings back hidden Stages). Quit Stages from the button below, or from any Stage's menu." />
+                            <Button x:Name="QuitStagesButton"
+                                    Content="Quit Stages"
+                                    HorizontalAlignment="Left"
+                                    Margin="20,6,0,0"
+                                    Style="{StaticResource SettingsButtonStyle}"
+                                    Click="QuitStagesButton_Click" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Hide / show all Stages" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="A keyboard shortcut that works anywhere in Windows. Click the box, then press the keys you want (at least one of Ctrl, Alt or Win, plus another key). Esc cancels." />
+                            <StackPanel Orientation="Horizontal">
+                                <TextBox x:Name="HotkeyBox"
+                                         Width="220"
+                                         IsReadOnly="True"
+                                         IsReadOnlyCaretVisible="False"
+                                         Style="{StaticResource SettingsTextBoxStyle}"
+                                         PreviewKeyDown="HotkeyBox_PreviewKeyDown"
+                                         GotKeyboardFocus="HotkeyBox_GotKeyboardFocus"
+                                         LostKeyboardFocus="HotkeyBox_LostKeyboardFocus" />
+                                <Button x:Name="ClearHotkeyButton"
+                                        Content="No shortcut"
+                                        Margin="8,0,0,0"
+                                        Style="{StaticResource SettingsButtonStyle}"
+                                        Click="ClearHotkeyButton_Click" />
+                                <Button x:Name="DefaultHotkeyButton"
+                                        Content="Default"
+                                        Margin="8,0,0,0"
+                                        Style="{StaticResource SettingsButtonStyle}"
+                                        Click="DefaultHotkeyButton_Click" />
+                            </StackPanel>
+                            <!-- "Working" / "used by another program" / "off" - filled in by the code -->
+                            <TextBlock x:Name="HotkeyStatusText"
+                                       Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="0,6,0,0" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Default background" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="Used by every Stage that hasn't picked its own background (right-click a Stage > Background)." />
+                            <RadioButton x:Name="BlurRadio"
+                                         GroupName="DefaultBackdrop"
+                                         Content="Blur"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="DefaultBackdropRadio_Checked" />
+                            <RadioButton x:Name="AcrylicRadio"
+                                         GroupName="DefaultBackdrop"
+                                         Content="Acrylic (imitation)"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="DefaultBackdropRadio_Checked" />
+                            <RadioButton x:Name="TranslucentRadio"
+                                         GroupName="DefaultBackdrop"
+                                         Content="Translucent (no blur)"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="DefaultBackdropRadio_Checked" />
+                            <TextBlock x:Name="TransparencyOffWarning"
+                                       Style="{StaticResource SettingsWarningStyle}"
+                                       Margin="0,8,0,0"
+                                       Visibility="Collapsed"
+                                       Text="Windows' transparency effects are switched off, so every background looks solid. To turn them on: Windows Settings > Personalization > Colors > Transparency effects." />
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <Button x:Name="UseBackdropEverywhereButton"
+                                        Content="Use on every Stage"
+                                        Style="{StaticResource SettingsButtonStyle}"
+                                        Click="UseBackdropEverywhereButton_Click" />
+                                <TextBlock x:Name="OwnBackdropCountText"
+                                           Style="{StaticResource SettingsDescriptionStyle}"
+                                           VerticalAlignment="Center"
+                                           Margin="12,0,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Default title bar height" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="Used by every Stage that hasn't picked its own height (right-click a Stage > Title size...)." />
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="50" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Height" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Slider x:Name="DefaultTitleHeightSlider"
+                                        Grid.Column="1"
+                                        Style="{StaticResource SettingsSliderStyle}"
+                                        ValueChanged="DefaultTitleHeightSlider_ValueChanged" />
+                                <TextBlock x:Name="DefaultTitleHeightValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+                            </Grid>
+                            <StackPanel Orientation="Horizontal" Margin="0,10,0,0">
+                                <Button x:Name="UseTitleHeightEverywhereButton"
+                                        Content="Use on every Stage"
+                                        Style="{StaticResource SettingsButtonStyle}"
+                                        Click="UseTitleHeightEverywhereButton_Click" />
+                                <TextBlock x:Name="OwnTitleHeightCountText"
+                                           Style="{StaticResource SettingsDescriptionStyle}"
+                                           VerticalAlignment="Center"
+                                           Margin="12,0,0,0" />
+                            </StackPanel>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- A click on the title bar rolls the Stage up (StageWindow.TitleClick.vb) -->
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Title bar" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <CheckBox x:Name="TitleClickRollsUpCheckBox"
+                                      Content="Click the title bar to roll a Stage up"
+                                      Style="{StaticResource SettingsCheckBoxStyle}"
+                                      Click="TitleClickRollsUpCheckBox_Click" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="20,0,0,0"
+                                       Text="One click shrinks the Stage to its title bar, and it stays that way - even when the mouse is over it - until you click the title bar again. Dragging the title bar still moves the Stage and double-clicking still renames it, so the roll waits a moment to make sure it wasn't a double-click. Each Stage can follow this or choose for itself: right-click the Stage &gt; Title bar click." />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="New Stages" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <CheckBox x:Name="NewStagesMinifyCheckBox"
+                                      Content="Start minified"
+                                      Style="{StaticResource SettingsCheckBoxStyle}"
+                                      Click="NewStagesMinifyCheckBox_Click" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="20,0,0,0"
+                                       Text="A minified Stage shrinks to its title bar until the mouse is over it. Each Stage can still switch this on or off from its own menu." />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- How minified Stages open and close: instantly, or rolling -->
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Minified Stages" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <CheckBox x:Name="AnimateMinifyCheckBox"
+                                      Content="Animate opening and closing"
+                                      Style="{StaticResource SettingsCheckBoxStyle}"
+                                      Click="AnimateMinifyCheckBox_Click" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="20,0,0,0"
+                                       Text="A minified Stage rolls open when the mouse moves onto it and rolls shut when it leaves, instead of changing size instantly." />
+
+                            <!-- Which way they open (StageWindow.OpenDirection.vb) -->
+                            <TextBlock Text="Open" Style="{StaticResource SettingsRowLabelStyle}" Margin="0,10,0,2" />
+                            <RadioButton x:Name="OpenDownRadio"
+                                         Content="Downwards"
+                                         GroupName="MinifyOpenDirection"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="OpenDirectionRadio_Checked" />
+                            <RadioButton x:Name="OpenUpRadio"
+                                         Content="Upwards"
+                                         GroupName="MinifyOpenDirection"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="OpenDirectionRadio_Checked" />
+                            <RadioButton x:Name="OpenAutomaticRadio"
+                                         Content="Automatic: upwards when there isn't room below"
+                                         GroupName="MinifyOpenDirection"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="OpenDirectionRadio_Checked" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="Opening upwards, the title bar stays where it is and the Stage opens above it, like a list that drops upwards. Automatic opens downwards unless the Stage would run off the bottom of the screen; then upwards (or, if it fits neither way, towards whichever side has more room). The same goes for a Stage rolled up by clicking its title bar." />
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="60" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Duration" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Slider x:Name="MinifyAnimationSlider"
+                                        Grid.Column="1"
+                                        Style="{StaticResource SettingsSliderStyle}"
+                                        ValueChanged="MinifyAnimationSlider_ValueChanged" />
+                                <TextBlock x:Name="MinifyAnimationValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+                            </Grid>
+                            <TextBlock x:Name="WindowsAnimationsOffText"
+                                       Style="{StaticResource SettingsWarningStyle}"
+                                       Visibility="Collapsed"
+                                       Text="Animation effects are switched off in Windows (Settings &gt; Accessibility &gt; Visual effects), so Stages won't animate until they are switched back on." />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ===== Appearance ===== -->
+                <StackPanel x:Name="AppearancePage" Visibility="Collapsed">
+                    <TextBlock Text="Appearance" Style="{StaticResource SettingsPageTitleStyle}" />
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Theme" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="Light or dark for this window, the dialogs and the right-click menus (Stage menu, tray menu and the Explorer menu on items). The Stages themselves use the settings below." />
+                            <RadioButton x:Name="ThemeSystemRadio"
+                                         GroupName="Theme"
+                                         Content="Same as Windows"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="ThemeRadio_Checked" />
+                            <RadioButton x:Name="ThemeLightRadio"
+                                         GroupName="Theme"
+                                         Content="Light"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="ThemeRadio_Checked" />
+                            <RadioButton x:Name="ThemeDarkRadio"
+                                         GroupName="Theme"
+                                         Content="Dark"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="ThemeRadio_Checked" />
+                            <TextBlock x:Name="MenuThemeUnavailableText"
+                                       Style="{StaticResource SettingsWarningStyle}"
+                                       Margin="0,8,0,0"
+                                       Visibility="Collapsed"
+                                       Text="This version of Windows can't show dark menus, so menus stay light. This window and the dialogs still follow the theme." />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Stage tint" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="The colour laid over the desktop behind Blur and Translucent Stages." />
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Colour" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Button x:Name="StageTintColorButton"
+                                        Grid.Column="1"
+                                        Margin="8,0"
+                                        Style="{StaticResource SettingsButtonStyle}"
+                                        Click="StageTintColorButton_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border x:Name="StageTintSwatch" Style="{StaticResource SettingsColorSwatchStyle}" />
+                                        <TextBlock x:Name="StageTintColorText" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="50" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Strength" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Slider x:Name="StageTintOpacitySlider"
+                                        Grid.Column="1"
+                                        Style="{StaticResource SettingsSliderStyle}"
+                                        ValueChanged="AppearanceSlider_ValueChanged" />
+                                <TextBlock x:Name="StageTintOpacityValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Imitation acrylic" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="Only affects Stages using the Acrylic background. Stages draws this itself over Windows' blur: a faithful imitation of Windows acrylic, not the real thing, so that it looks the same on Windows 10 and 11." />
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Tint colour" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Button x:Name="AcrylicTintColorButton"
+                                        Grid.Column="1"
+                                        Margin="8,0"
+                                        Style="{StaticResource SettingsButtonStyle}"
+                                        Click="AcrylicTintColorButton_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border x:Name="AcrylicTintSwatch" Style="{StaticResource SettingsColorSwatchStyle}" />
+                                        <TextBlock x:Name="AcrylicTintColorText" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="50" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Tint strength" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Slider x:Name="AcrylicTintOpacitySlider"
+                                        Grid.Column="1"
+                                        Style="{StaticResource SettingsSliderStyle}"
+                                        ValueChanged="AppearanceSlider_ValueChanged" />
+                                <TextBlock x:Name="AcrylicTintOpacityValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+                            </Grid>
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="50" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Sheen" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Slider x:Name="AcrylicSheenSlider"
+                                        Grid.Column="1"
+                                        Style="{StaticResource SettingsSliderStyle}"
+                                        ValueChanged="AppearanceSlider_ValueChanged" />
+                                <TextBlock x:Name="AcrylicSheenValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+                            </Grid>
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="50" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Grain" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Slider x:Name="AcrylicGrainSlider"
+                                        Grid.Column="1"
+                                        Style="{StaticResource SettingsSliderStyle}"
+                                        ValueChanged="AppearanceSlider_ValueChanged" />
+                                <TextBlock x:Name="AcrylicGrainValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Text on every Stage: font, sizes and colours -->
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Stage text" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="The font, sizes and colours of every Stage's title and item labels." />
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Font" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <!-- Opens Windows' font picker; only the font family is used -->
+                                <Button x:Name="StageFontButton"
+                                        Grid.Column="1"
+                                        Margin="8,0"
+                                        HorizontalAlignment="Left"
+                                        Style="{StaticResource SettingsButtonStyle}"
+                                        Click="StageFontButton_Click">
+                                    <TextBlock x:Name="StageFontNameText" VerticalAlignment="Center" />
+                                </Button>
+                            </Grid>
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="50" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Label size" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Slider x:Name="LabelFontSizeSlider"
+                                        Grid.Column="1"
+                                        Style="{StaticResource SettingsSliderStyle}"
+                                        ValueChanged="StageTextSlider_ValueChanged" />
+                                <TextBlock x:Name="LabelFontSizeValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+                            </Grid>
+                            <CheckBox x:Name="AutomaticTitleSizeCheckBox"
+                                      Content="Title size follows the title bar height (half of it)"
+                                      Style="{StaticResource SettingsCheckBoxStyle}"
+                                      Click="AutomaticTitleSizeCheckBox_Click" />
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="50" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Title size" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Slider x:Name="TitleFontSizeSlider"
+                                        Grid.Column="1"
+                                        Style="{StaticResource SettingsSliderStyle}"
+                                        ValueChanged="StageTextSlider_ValueChanged" />
+                                <TextBlock x:Name="TitleFontSizeValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+                            </Grid>
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Title colour" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Button x:Name="TitleTextColorButton"
+                                        Grid.Column="1"
+                                        Margin="8,0"
+                                        Style="{StaticResource SettingsButtonStyle}"
+                                        Click="TitleTextColorButton_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border x:Name="TitleTextSwatch" Style="{StaticResource SettingsColorSwatchStyle}" />
+                                        <TextBlock x:Name="TitleTextColorText" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Label colour" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Button x:Name="LabelTextColorButton"
+                                        Grid.Column="1"
+                                        Margin="8,0"
+                                        Style="{StaticResource SettingsButtonStyle}"
+                                        Click="LabelTextColorButton_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border x:Name="LabelTextSwatch" Style="{StaticResource SettingsColorSwatchStyle}" />
+                                        <TextBlock x:Name="LabelTextColorText" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Where the title sits, and how the open tab is marked (StageWindow.Appearance.vb) -->
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Title and tabs" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Text="Title position" Style="{StaticResource SettingsRowLabelStyle}" Margin="0,4,0,2" />
+                            <StackPanel Orientation="Horizontal">
+                                <RadioButton x:Name="TitleLeftRadio"
+                                             Content="Left"
+                                             GroupName="TitleAlignment"
+                                             Margin="0,0,18,0"
+                                             Style="{StaticResource SettingsRadioButtonStyle}"
+                                             Checked="TitleAlignmentRadio_Checked" />
+                                <RadioButton x:Name="TitleCentreRadio"
+                                             Content="Centre"
+                                             GroupName="TitleAlignment"
+                                             Margin="0,0,18,0"
+                                             Style="{StaticResource SettingsRadioButtonStyle}"
+                                             Checked="TitleAlignmentRadio_Checked" />
+                                <RadioButton x:Name="TitleRightRadio"
+                                             Content="Right"
+                                             GroupName="TitleAlignment"
+                                             Style="{StaticResource SettingsRadioButtonStyle}"
+                                             Checked="TitleAlignmentRadio_Checked" />
+                            </StackPanel>
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="Where each Stage's title sits in its title bar. On a Stage with tabs, the row of tabs sits there instead." />
+
+                            <TextBlock Text="Open tab" Style="{StaticResource SettingsRowLabelStyle}" Margin="0,10,0,2" />
+                            <RadioButton x:Name="TabUnderlineRadio"
+                                         Content="Underline: a line in the tab colour under the open tab"
+                                         GroupName="TabStyle"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="TabStyleRadio_Checked" />
+                            <RadioButton x:Name="TabShadedRadio"
+                                         Content="Shaded: the open tab is lightly shaded"
+                                         GroupName="TabStyle"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="TabStyleRadio_Checked" />
+                            <RadioButton x:Name="TabOutlinedRadio"
+                                         Content="Outlined: an outline in the tab colour round the open tab, like Windows' tabs"
+                                         GroupName="TabStyle"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="TabStyleRadio_Checked" />
+                            <RadioButton x:Name="TabClearRadio"
+                                         Content="Clear: no marking, the open tab is just brighter"
+                                         GroupName="TabStyle"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="TabStyleRadio_Checked" />
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Tab colour" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <StackPanel Grid.Column="1" Orientation="Horizontal">
+                                    <Button x:Name="TabAccentColorButton"
+                                            Margin="8,0"
+                                            Style="{StaticResource SettingsButtonStyle}"
+                                            Click="TabAccentColorButton_Click">
+                                        <StackPanel Orientation="Horizontal">
+                                            <Border x:Name="TabAccentSwatch" Style="{StaticResource SettingsColorSwatchStyle}" />
+                                            <TextBlock x:Name="TabAccentColorText" VerticalAlignment="Center" />
+                                        </StackPanel>
+                                    </Button>
+                                    <!-- Back to Automatic after picking a colour -->
+                                    <Button x:Name="TabAccentAutomaticButton"
+                                            Content="Automatic"
+                                            Style="{StaticResource SettingsButtonStyle}"
+                                            Click="TabAccentAutomaticButton_Click" />
+                                </StackPanel>
+                            </Grid>
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="The colour of the underline or outline. Automatic: an outline is the Stage's own colour, 5% lighter; an underline is light blue. The other tabs are always drawn a little fainter than the open one." />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Every Stage's title bar, outline and corners -->
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Stage frame" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="The title bar's shading, an outline round each Stage, and the shape of its corners." />
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Title bar colour" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Button x:Name="TitleBarColorButton"
+                                        Grid.Column="1"
+                                        Margin="8,0"
+                                        Style="{StaticResource SettingsButtonStyle}"
+                                        Click="TitleBarColorButton_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border x:Name="TitleBarSwatch" Style="{StaticResource SettingsColorSwatchStyle}" />
+                                        <TextBlock x:Name="TitleBarColorText" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="50" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Title bar strength" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Slider x:Name="TitleBarOpacitySlider"
+                                        Grid.Column="1"
+                                        Style="{StaticResource SettingsSliderStyle}"
+                                        ValueChanged="StageTextSlider_ValueChanged" />
+                                <TextBlock x:Name="TitleBarOpacityValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+                            </Grid>
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="50" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Outline width" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Slider x:Name="BorderThicknessSlider"
+                                        Grid.Column="1"
+                                        Style="{StaticResource SettingsSliderStyle}"
+                                        ValueChanged="StageTextSlider_ValueChanged" />
+                                <TextBlock x:Name="BorderThicknessValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+                            </Grid>
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Outline colour" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Button x:Name="BorderColorButton"
+                                        Grid.Column="1"
+                                        Margin="8,0"
+                                        Style="{StaticResource SettingsButtonStyle}"
+                                        Click="BorderColorButton_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border x:Name="BorderSwatch" Style="{StaticResource SettingsColorSwatchStyle}" />
+                                        <TextBlock x:Name="BorderColorText" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="50" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Outline strength" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Slider x:Name="BorderOpacitySlider"
+                                        Grid.Column="1"
+                                        Style="{StaticResource SettingsSliderStyle}"
+                                        ValueChanged="StageTextSlider_ValueChanged" />
+                                <TextBlock x:Name="BorderOpacityValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+                            </Grid>
+                            <TextBlock Text="Corners" Style="{StaticResource SettingsRowLabelStyle}" Margin="0,8,0,0" />
+                            <RadioButton x:Name="RoundedCornersRadio"
+                                         Content="Rounded"
+                                         GroupName="StageCorners"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="CornerRadio_Checked" />
+                            <RadioButton x:Name="SquareCornersRadio"
+                                         Content="Square (pointed)"
+                                         GroupName="StageCorners"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="CornerRadio_Checked" />
+                            <TextBlock x:Name="CornersUnavailableText"
+                                       Style="{StaticResource SettingsWarningStyle}"
+                                       Visibility="Collapsed"
+                                       Text="Windows 10 can't round the corners of a blurred window, so Stages stay square here. Rounded corners appear on Windows 11." />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- Resets the cards above; the Theme choice is left alone -->
+                    <Button x:Name="RestoreAppearanceButton"
+                            Content="Restore default appearance"
+                            Style="{StaticResource SettingsButtonStyle}"
+                            Click="RestoreAppearanceButton_Click" />
+                </StackPanel>
+
+                <!-- ===== Items ===== -->
+                <StackPanel x:Name="ItemsPage" Visibility="Collapsed">
+                    <TextBlock Text="Items" Style="{StaticResource SettingsPageTitleStyle}" />
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="File name extensions" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="Whether labels end in the file type, such as .docx or .pdf. For a shortcut, it's the type of the file it opens." />
+                            <!-- The "(currently ...)" part of this text is filled in by the code -->
+                            <RadioButton x:Name="ExtensionsSameAsWindowsRadio"
+                                         GroupName="FileExtensions"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="ExtensionsRadio_Checked" />
+                            <RadioButton x:Name="ExtensionsShowRadio"
+                                         GroupName="FileExtensions"
+                                         Content="Always show"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="ExtensionsRadio_Checked" />
+                            <RadioButton x:Name="ExtensionsHideRadio"
+                                         GroupName="FileExtensions"
+                                         Content="Always hide"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="ExtensionsRadio_Checked" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="0,8,0,0"
+                                       Text="Windows' setting is in File Explorer: View > Show > File name extensions. Like Explorer, &quot;hidden&quot; there only hides the extensions of file types that have a program set up to open them." />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- What Delete does to real files on a folder Stage -->
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Deleting from folder Stages" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="A folder Stage shows your real files, so Delete in its right-click menu deletes the file itself. This doesn't affect ordinary Stages: removing a shortcut from those always sends just the shortcut to the Recycle Bin." />
+                            <RadioButton x:Name="FolderDeleteRecycleRadio"
+                                         GroupName="FolderDelete"
+                                         Content="Move to the Recycle Bin (recommended)"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="FolderDeleteRadio_Checked" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}" Margin="24,0,0,6"
+                                       Text="Stages asks first. If Windows can't recycle a file (a network drive, for example), Windows warns you before deleting it for good." />
+                            <RadioButton x:Name="FolderDeleteWindowsRadio"
+                                         GroupName="FolderDelete"
+                                         Content="Same as Windows"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="FolderDeleteRadio_Checked" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}" Margin="24,0,0,6"
+                                       Text="Behaves like Delete in File Explorer on this PC: Windows asks only if its own delete confirmation is switched on, and follows the Recycle Bin's own settings." />
+                            <RadioButton x:Name="FolderDeletePermanentRadio"
+                                         GroupName="FolderDelete"
+                                         Content="Delete permanently"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="FolderDeleteRadio_Checked" />
+                            <TextBlock Style="{StaticResource SettingsWarningStyle}" Margin="24,0,0,0"
+                                       Text="Stages asks first, but the file can't be brought back afterwards." />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Icons" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="Stages shows the same icons as Windows, including custom icons for file types and folders, and icon packs. When Windows announces that icons have changed, the Stages update by themselves." />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="To give one shortcut its own icon, right-click it on its Stage and choose Change icon... (Reset icon puts it back)." />
+                            <Button x:Name="RefreshIconsButton"
+                                    Content="Refresh icons now"
+                                    Style="{StaticResource SettingsButtonStyle}"
+                                    Click="RefreshIconsButton_Click" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="0,6,0,0"
+                                       Text="For icon changes Windows doesn't announce." />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ===== Desktop ===== -->
+                <StackPanel x:Name="DesktopPage" Visibility="Collapsed">
+                    <TextBlock Text="Desktop" Style="{StaticResource SettingsPageTitleStyle}" />
+
+                    <!-- Lining Stages up while one is moved or resized (StageWindow.Snapping.vb) -->
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Arranging Stages" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Text="Snapping" Style="{StaticResource SettingsRowLabelStyle}" Margin="0,4,0,2" />
+                            <RadioButton x:Name="SnapBesideRadio"
+                                         GroupName="StageSnapping"
+                                         Content="Beside other Stages (recommended)"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="SnapModeRadio_Checked" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="20,0,0,0"
+                                       Text="Bring a Stage up next to another and it sits the gap away, lined up with that Stage's top or bottom (or left or right, when stacked). Anywhere else it moves freely." />
+                            <RadioButton x:Name="SnapFullRadio"
+                                         GroupName="StageSnapping"
+                                         Content="Full"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="SnapModeRadio_Checked" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="20,0,0,0"
+                                       Text="Also lines up with the edges of every Stage on screen, however far away, and with the screen's edges." />
+                            <RadioButton x:Name="SnapOffRadio"
+                                         GroupName="StageSnapping"
+                                         Content="Off"
+                                         Style="{StaticResource SettingsRadioButtonStyle}"
+                                         Checked="SnapModeRadio_Checked" />
+                            <CheckBox x:Name="SnapSideBySideOnlyCheckBox"
+                                      Content="Only snap side by side"
+                                      Margin="0,8,0,0"
+                                      Style="{StaticResource SettingsCheckBoxStyle}"
+                                      Click="ArrangingCheckBox_Click" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="20,0,0,0"
+                                       Text="A Stage lines up only with Stages in the same row, never with ones above or below it. A minified Stage then counts as just its title bar, so you can line up a row right underneath minified Stages; they open over it when you point at them." />
+                            <CheckBox x:Name="PreventOverlapCheckBox"
+                                      Content="Keep Stages from overlapping"
+                                      Margin="0,8,0,0"
+                                      Style="{StaticResource SettingsCheckBoxStyle}"
+                                      Click="ArrangingCheckBox_Click" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="20,0,0,0"
+                                       Text="A Stage you let go of on top of another moves to the nearest free spot, at least the gap below away. While resizing, an edge stops short of the next Stage. A minified Stage counts at its full open height." />
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                    <ColumnDefinition Width="50" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Gap" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Slider x:Name="StageGapSlider"
+                                        Grid.Column="1"
+                                        Style="{StaticResource SettingsSliderStyle}"
+                                        ValueChanged="StageGapSlider_ValueChanged" />
+                                <TextBlock x:Name="StageGapValueText" Grid.Column="2" Style="{StaticResource SettingsRowValueStyle}" />
+                            </Grid>
+                            <CheckBox x:Name="ShowSnapGuidesCheckBox"
+                                      Content="Show guide lines"
+                                      Style="{StaticResource SettingsCheckBoxStyle}"
+                                      Click="ArrangingCheckBox_Click" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="20,0,0,0"
+                                       Text="A coloured line runs from the Stage you are moving to each Stage it is in line with." />
+                            <Grid Style="{StaticResource SettingsRowStyle}">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="110" />
+                                    <ColumnDefinition Width="*" />
+                                </Grid.ColumnDefinitions>
+                                <TextBlock Grid.Column="0" Text="Line colour" Style="{StaticResource SettingsRowLabelStyle}" />
+                                <Button x:Name="SnapGuideColorButton"
+                                        Grid.Column="1"
+                                        Margin="8,0"
+                                        Style="{StaticResource SettingsButtonStyle}"
+                                        Click="SnapGuideColorButton_Click">
+                                    <StackPanel Orientation="Horizontal">
+                                        <Border x:Name="SnapGuideSwatch" Style="{StaticResource SettingsColorSwatchStyle}" />
+                                        <TextBlock x:Name="SnapGuideColorText" VerticalAlignment="Center" />
+                                    </StackPanel>
+                                </Button>
+                            </Grid>
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="0,6,0,0"
+                                       Text="Hold Alt while moving or resizing a Stage to place it freely: no snapping, and it may overlap other Stages. (The Stage's title bar says so too, if you rest the pointer on it.)" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Files that live on the desktop" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="A Stage holds shortcuts, never the files themselves. So when you drop a file from the desktop onto a Stage, the file stays on the desktop and you see it twice: once on the desktop and once as a shortcut on the Stage." />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="There are two ways to tidy that up:" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="12,0,0,6"
+                                       Text="1.  Move the file somewhere else, such as Documents. Its shortcut on the Stage keeps working, because Windows follows files that move on the same NTFS drive." />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="12,0,0,10"
+                                       Text="2.  Hide the desktop icons (below). The files stay where they are, but only your Stages show." />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Desktop icons" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <CheckBox x:Name="HideDesktopIconsCheckBox"
+                                      Content="Hide desktop icons"
+                                      Style="{StaticResource SettingsCheckBoxStyle}"
+                                      Click="HideDesktopIconsCheckBox_Click" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="20,0,0,0"
+                                       Text="The same switch as right-clicking the desktop > View > Show desktop icons, so Windows remembers it even when Stages isn't running. Your Stages stay visible." />
+                            <TextBlock x:Name="DesktopIconsUnavailableText"
+                                       Style="{StaticResource SettingsWarningStyle}"
+                                       Margin="20,0,0,0"
+                                       Visibility="Collapsed"
+                                       Text="Explorer's desktop couldn't be found just now, so this can't be changed. Try again in a moment." />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ===== Backup ===== -->
+                <StackPanel x:Name="BackupPage" Visibility="Collapsed">
+                    <TextBlock Text="Backup" Style="{StaticResource SettingsPageTitleStyle}" />
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Save a backup" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="Saves every Stage (its shortcuts, tabs, layout and background picture) and these settings into one .zip file. Keep it somewhere safe, or use it to move your Stages to another PC." />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="A folder Stage's backup holds the Stage itself, not the files in the folder it shows." />
+                            <Button x:Name="SaveBackupButton"
+                                    Content="Save a backup..."
+                                    HorizontalAlignment="Left"
+                                    Style="{StaticResource SettingsButtonStyle}"
+                                    Click="SaveBackupButton_Click" />
+                            <TextBlock x:Name="BackupStatusText"
+                                       Style="{StaticResource SettingsDescriptionStyle}"
+                                       Margin="0,8,0,0"
+                                       TextWrapping="Wrap" />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Import a backup" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="Replaces all your current Stages and settings with the ones in a backup, then restarts Stages. Your current Stages and settings go to the Recycle Bin, so they can be brought back from there." />
+                            <Button x:Name="ImportBackupButton"
+                                    Content="Import a backup..."
+                                    HorizontalAlignment="Left"
+                                    Style="{StaticResource SettingsButtonStyle}"
+                                    Click="ImportBackupButton_Click" />
+                            <TextBlock x:Name="ImportStatusText"
+                                       Style="{StaticResource SettingsWarningStyle}"
+                                       Margin="0,8,0,0"
+                                       Visibility="Collapsed" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+
+                <!-- ===== Install (Services\PortableInstaller.vb) =====
+                     Explained in plain words first, then the choices, then one Install button.
+                     The code-behind shows either the portable cards or InstalledCard. -->
+                <StackPanel x:Name="InstallPage" Visibility="Collapsed">
+                    <TextBlock Text="Install Stages from portable version" Style="{StaticResource SettingsPageTitleStyle}" />
+
+                    <!-- Shown when this copy is already the installed one -->
+                    <Border x:Name="InstalledCard" Style="{StaticResource SettingsCardStyle}" Visibility="Collapsed">
+                        <StackPanel>
+                            <TextBlock Text="Stages is installed" Style="{StaticResource SettingsCardTitleStyle}" />
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="This copy of Stages is the installed one, so there's nothing to do here. It's in the Start menu if you chose that, and you can uninstall it from Windows Settings &gt; Apps like any other program." />
+                            <TextBlock x:Name="InstalledFolderText" Style="{StaticResource SettingsDescriptionStyle}" />
+                        </StackPanel>
+                    </Border>
+
+                    <!-- The rest: shown when running a portable copy -->
+                    <StackPanel x:Name="PortableInstallPanel">
+                        <Border Style="{StaticResource SettingsCardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="What installing does" Style="{StaticResource SettingsCardTitleStyle}" />
+                                <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                           Text="You're running Stages straight from the file you built or downloaded. That's called a portable copy: it works, but Windows doesn't know about it. Installing makes it a normal Windows program:" />
+                                <TextBlock Style="{StaticResource SettingsDescriptionStyle}" Margin="12,2,0,0"
+                                           Text="•  Stages copies itself into its own folder on this PC and runs from there from now on. You don't need to know where that is." />
+                                <TextBlock Style="{StaticResource SettingsDescriptionStyle}" Margin="12,2,0,0"
+                                           Text="•  It can appear in the Start menu, so you can find it like any other program." />
+                                <TextBlock Style="{StaticResource SettingsDescriptionStyle}" Margin="12,2,0,0"
+                                           Text="•  It can start by itself when you sign in to Windows." />
+                                <TextBlock Style="{StaticResource SettingsDescriptionStyle}" Margin="12,2,0,0"
+                                           Text="•  It's listed in Windows Settings &gt; Apps, where it can be uninstalled like any other program." />
+                                <TextBlock Style="{StaticResource SettingsDescriptionStyle}" Margin="0,6,0,0"
+                                           Text="Your Stages and settings stay exactly as they are. Stages is installed just for your Windows account, so it doesn't need administrator rights." />
+                                <TextBlock x:Name="ReplacesInstalledText"
+                                           Style="{StaticResource SettingsWarningStyle}"
+                                           Margin="0,6,0,0"
+                                           Visibility="Collapsed" />
+                            </StackPanel>
+                        </Border>
+
+                        <Border Style="{StaticResource SettingsCardStyle}">
+                            <StackPanel>
+                                <TextBlock Text="Choose" Style="{StaticResource SettingsCardTitleStyle}" />
+                                <CheckBox x:Name="InstallStartMenuCheckBox"
+                                          Content="Add Stages to the Start menu"
+                                          IsChecked="True"
+                                          Style="{StaticResource SettingsCheckBoxStyle}" />
+                                <CheckBox x:Name="InstallStartWithWindowsCheckBox"
+                                          Content="Start Stages when I sign in to Windows"
+                                          IsChecked="True"
+                                          Style="{StaticResource SettingsCheckBoxStyle}" />
+                                <CheckBox x:Name="InstallRemovePortableCheckBox"
+                                          Content="Remove this portable copy afterwards"
+                                          IsChecked="True"
+                                          Style="{StaticResource SettingsCheckBoxStyle}" />
+                                <TextBlock x:Name="PortableCopyPathText"
+                                           Style="{StaticResource SettingsDescriptionStyle}"
+                                           Margin="20,0,0,0" />
+
+                                <Button x:Name="InstallButton"
+                                        Content="Install"
+                                        HorizontalAlignment="Left"
+                                        Margin="0,10,0,0"
+                                        Style="{StaticResource SettingsButtonStyle}"
+                                        Click="InstallButton_Click" />
+                                <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                           Margin="0,6,0,0"
+                                           Text="Stages closes for a moment and opens again as the installed program." />
+                                <TextBlock x:Name="InstallStatusText"
+                                           Style="{StaticResource SettingsWarningStyle}"
+                                           Margin="0,8,0,0"
+                                           Visibility="Collapsed" />
+                            </StackPanel>
+                        </Border>
+                    </StackPanel>
+                </StackPanel>
+
+                <!-- ===== About ===== -->
+                <StackPanel x:Name="AboutPage" Visibility="Collapsed">
+                    <TextBlock Text="About" Style="{StaticResource SettingsPageTitleStyle}" />
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                                <Image Source="/Stages;component/Resources/StagesLogo.png"
+                                       Width="48" Height="48"
+                                       RenderOptions.BitmapScalingMode="HighQuality"
+                                       Margin="0,0,14,0" />
+                                <StackPanel VerticalAlignment="Center">
+                                    <TextBlock Text="Stages" FontSize="20" FontWeight="SemiBold"
+                                               Foreground="{DynamicResource ThemePrimaryTextBrush}" />
+                                    <TextBlock x:Name="VersionText" Style="{StaticResource SettingsDescriptionStyle}" Margin="0" />
+                                </StackPanel>
+                            </StackPanel>
+                            <TextBlock Style="{StaticResource SettingsDescriptionStyle}"
+                                       Text="Semi-transparent panels on the desktop that hold shortcuts to your files and folders. Stages started as a VB.NET / WPF rewrite of NoFences by Twometer." />
+                        </StackPanel>
+                    </Border>
+
+                    <Border Style="{StaticResource SettingsCardStyle}">
+                        <StackPanel>
+                            <TextBlock Text="Where things are kept" Style="{StaticResource SettingsCardTitleStyle}" />
+
+                            <TextBlock Text="Stage folders" Style="{StaticResource SettingsRowLabelStyle}" Margin="0,6,0,0" />
+                            <TextBlock x:Name="DataFolderText" Style="{StaticResource SettingsDescriptionStyle}" Margin="0,0,0,4" />
+                            <Button Content="Open" Style="{StaticResource SettingsButtonStyle}" Click="OpenDataFolderButton_Click" />
+
+                            <TextBlock Text="Log files" Style="{StaticResource SettingsRowLabelStyle}" Margin="0,14,0,0" />
+                            <TextBlock x:Name="LogsFolderText" Style="{StaticResource SettingsDescriptionStyle}" Margin="0,0,0,4" />
+                            <Button Content="Open" Style="{StaticResource SettingsButtonStyle}" Click="OpenLogsFolderButton_Click" />
+
+                            <TextBlock Text="These settings" Style="{StaticResource SettingsRowLabelStyle}" Margin="0,14,0,0" />
+                            <TextBlock x:Name="SettingsFileText" Style="{StaticResource SettingsDescriptionStyle}" Margin="0,0,0,4" />
+                            <Button Content="Open folder" Style="{StaticResource SettingsButtonStyle}" Click="OpenSettingsFolderButton_Click" />
+                        </StackPanel>
+                    </Border>
+                </StackPanel>
+            </Grid>
+        </ScrollViewer>
+
+        <!-- ================= Footer ================= -->
+        <Border Grid.Column="1" Grid.Row="1"
+                BorderBrush="{DynamicResource ThemeDividerBrush}"
+                BorderThickness="0,1,0,0"
+                Padding="28,10">
+            <DockPanel LastChildFill="False">
+                <TextBlock DockPanel.Dock="Left"
+                           Style="{StaticResource SettingsDescriptionStyle}"
+                           VerticalAlignment="Center"
+                           Margin="0"
+                           Text="Changes apply straight away and are saved automatically." />
+                <!-- IsCancel: the Esc key also closes the window -->
+                <Button DockPanel.Dock="Right"
+                        Content="Close"
+                        IsCancel="True"
+                        Style="{StaticResource SettingsButtonStyle}"
+                        Click="CloseButton_Click" />
+            </DockPanel>
+        </Border>
+    </Grid>
+</Window>

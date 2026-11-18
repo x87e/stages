@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Stages - VB.NET / WPF rewrite of NoFences.
+  Classic (non-SDK) project format so it opens directly in Visual Studio 2019/2022
+  with the ".NET desktop development" workload. Targets .NET Framework 4.8,
+  which ships with Windows 10 (1903+) and Windows 11.
+-->
+<Project ToolsVersion="15.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+  <Import Project="$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props" Condition="Exists('$(MSBuildExtensionsPath)\$(MSBuildToolsVersion)\Microsoft.Common.props')" />
+  <PropertyGroup>
+    <Configuration Condition=" '$(Configuration)' == '' ">Debug</Configuration>
+    <Platform Condition=" '$(Platform)' == '' ">AnyCPU</Platform>
+    <ProjectGuid>{862D8C84-4998-42F9-B86C-C63F7E4DC0C6}</ProjectGuid>
+    <!-- These two GUIDs tell Visual Studio this is a VB.NET WPF project -->
+    <ProjectTypeGuids>{60dc8134-eba5-43b8-bcc9-bb4bc16c2548};{F184B08F-C81C-45F6-A57F-5ABD9991F28F}</ProjectTypeGuids>
+    <OutputType>WinExe</OutputType>
+    <!-- Our own entry point lives in Program.vb (Module Program, Sub Main) -->
+    <StartupObject>Stages.Program</StartupObject>
+    <RootNamespace>Stages</RootNamespace>
+    <AssemblyName>Stages</AssemblyName>
+    <FileAlignment>512</FileAlignment>
+    <!-- "Empty" = no auto-generated My.* framework; we don't use it -->
+    <MyType>Empty</MyType>
+    <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
+    <Deterministic>true</Deterministic>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
+    <ApplicationManifest>app.manifest</ApplicationManifest>
+    <!-- Icon of Stages.exe in Explorer, the taskbar and Alt+Tab (also WPF windows' default icon) -->
+    <ApplicationIcon>Resources\Stages.ico</ApplicationIcon>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <DebugSymbols>true</DebugSymbols>
+    <DebugType>full</DebugType>
+    <DefineDebug>true</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <OutputPath>bin\Debug\</OutputPath>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
+  </PropertyGroup>
+  <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
+    <PlatformTarget>AnyCPU</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
+    <DebugType>pdbonly</DebugType>
+    <DefineDebug>false</DefineDebug>
+    <DefineTrace>true</DefineTrace>
+    <Optimize>true</Optimize>
+    <OutputPath>bin\Release\</OutputPath>
+    <NoWarn>42016,41999,42017,42018,42019,42032,42036,42020,42021,42022</NoWarn>
+  </PropertyGroup>
+  <!-- Strict compiler options: explicit declarations, no implicit narrowing conversions -->
+  <PropertyGroup>
+    <OptionExplicit>On</OptionExplicit>
+    <OptionCompare>Binary</OptionCompare>
+    <OptionStrict>On</OptionStrict>
+    <OptionInfer>On</OptionInfer>
+  </PropertyGroup>
+  <ItemGroup>
+    <Reference Include="System" />
+    <Reference Include="System.Core" />
+    <Reference Include="System.Xml" />
+    <Reference Include="System.Xaml">
+      <RequiredTargetFramework>4.0</RequiredTargetFramework>
+    </Reference>
+    <Reference Include="WindowsBase" />
+    <Reference Include="PresentationCore" />
+    <Reference Include="PresentationFramework" />
+    <!-- Part of .NET Framework itself (nothing downloaded). Used only for the tray icon
+         (NotifyIcon), the colour picker (ColorDialog) and two small hidden message windows
+         (NativeWindow), which WPF doesn't provide.
+         (All right-click menus are native Windows menus - see Native\NativePopupMenu.vb.)
+         Deliberately NOT added to the project-wide imports below, because their class
+         names (Application, MessageBox, Color...) clash with WPF's. Files that need them
+         import them under the aliases WinForms and GdiDrawing. -->
+    <Reference Include="System.Windows.Forms" />
+    <Reference Include="System.Drawing" />
+    <!-- Zip files for Settings > Backup (Services\BackupArchive.vb). Also part of .NET
+         Framework itself: nothing downloaded. -->
+    <Reference Include="System.IO.Compression" />
+    <Reference Include="System.IO.Compression.FileSystem" />
+  </ItemGroup>
+  <!-- Namespaces imported into every .vb file (deliberately does NOT include
+       System.Windows.Shapes, whose "Path" class would clash with System.IO.Path) -->
+  <ItemGroup>
+    <Import Include="Microsoft.VisualBasic" />
+    <Import Include="System" />
+    <Import Include="System.Collections.Generic" />
+    <Import Include="System.Linq" />
+    <Import Include="System.Threading.Tasks" />
+    <Import Include="System.Windows" />
+    <Import Include="System.Windows.Controls" />
+    <Import Include="System.Windows.Input" />
+    <Import Include="System.Windows.Media" />
+  </ItemGroup>
+  <!-- XAML pages (compiled to BAML) -->
+  <ItemGroup>
+    <Page Include="Themes\StagesStyles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <!-- Light/dark colour sets for the Settings window and dialogs; ThemeManager loads one -->
+    <Page Include="Themes\LightColors.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\DarkColors.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Themes\SettingsStyles.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\SettingsWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\StageWindow.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\RenameDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\TitleHeightDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\BackgroundPictureDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+    <Page Include="Views\StageKindOptionsDialog.xaml">
+      <Generator>MSBuild:Compile</Generator>
+      <SubType>Designer</SubType>
+    </Page>
+  </ItemGroup>
+  <!-- Source files -->
+  <ItemGroup>
+    <Compile Include="Program.vb" />
+    <Compile Include="My Project\AssemblyInfo.vb" />
+    <Compile Include="Model\AppSettings.vb" />
+    <Compile Include="Model\AppTheme.vb" />
+    <Compile Include="Model\FileExtensionDisplay.vb" />
+    <Compile Include="Model\FolderDeleteMode.vb" />
+    <Compile Include="Native\ShellFileDelete.vb" />
+    <Compile Include="Model\BackdropStyle.vb" />
+    <Compile Include="Model\StageDefaults.vb" />
+    <Compile Include="Model\StageInfo.vb" />
+    <Compile Include="Model\StageKind.vb" />
+    <Compile Include="Model\StageSnapMode.vb" />
+    <Compile Include="Model\StageItem.vb" />
+    <Compile Include="Model\StageLayout.vb" />
+    <Compile Include="Model\StageAppearance.vb" />
+    <Compile Include="ViewModels\StageItemViewModel.vb" />
+    <Compile Include="ViewModels\StageTabHeader.vb" />
+    <Compile Include="Services\AppPaths.vb" />
+    <Compile Include="Services\AppSettingsStore.vb" />
+    <Compile Include="Services\AtomicFile.vb" />
+    <Compile Include="Services\GlobalHotkey.vb" />
+    <Compile Include="Services\IconChangeWatcher.vb" />
+    <Compile Include="Services\ItemLabels.vb" />
+    <Compile Include="Services\ShortcutIcons.vb" />
+    <Compile Include="Services\StartupRegistration.vb" />
+    <Compile Include="Services\Logger.vb" />
+    <Compile Include="Services\StaWorkerThread.vb" />
+    <Compile Include="Services\IconProvider.vb" />
+    <Compile Include="Services\PictureLoader.vb" />
+    <Compile Include="Services\PortableInstaller.vb" />
+    <Compile Include="Services\BackupArchive.vb" />
+    <Compile Include="Services\StageFolder.vb" />
+    <Compile Include="Services\NamePatterns.vb" />
+    <Compile Include="Services\RunningWindows.vb" />
+    <Compile Include="Services\ClipboardMonitor.vb" />
+    <Compile Include="Services\ClipboardHistoryStore.vb" />
+    <Compile Include="Services\StageSnapper.vb" />
+    <Compile Include="Services\StageManager.vb" />
+    <Compile Include="Services\ThemeManager.vb" />
+    <Compile Include="Native\NativeMethods.vb" />
+    <Compile Include="Native\DesktopIntegration.vb" />
+    <Compile Include="Native\ShellIcons.vb" />
+    <Compile Include="Native\ShellLinks.vb" />
+    <Compile Include="Native\ShellContextMenu.vb" />
+    <Compile Include="Native\NativePopupMenu.vb" />
+    <Compile Include="Native\ShellFileTypes.vb" />
+    <Compile Include="Native\FolderPicker.vb" />
+    <Compile Include="Views\AcrylicNoise.vb" />
+    <Compile Include="Views\StageItemsPanel.vb" />
+    <Compile Include="Views\DetailsColumnsPanel.vb" />
+    <Compile Include="Views\TabStripPanel.vb" />
+    <Compile Include="Views\DialogHost.vb" />
+    <Compile Include="Views\SnapGuideOverlay.vb" />
+    <Compile Include="Views\StagesTrayIcon.vb" />
+    <Compile Include="Views\SettingsWindow.xaml.vb">
+      <DependentUpon>SettingsWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\StageWindow.xaml.vb">
+      <DependentUpon>StageWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <!-- More of the StageWindow class, split by topic (Partial Public Class StageWindow) -->
+    <Compile Include="Views\StageWindow.Layout.vb">
+      <DependentUpon>StageWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\StageWindow.Tabs.vb">
+      <DependentUpon>StageWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\StageWindow.Appearance.vb">
+      <DependentUpon>StageWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\StageWindow.Snapping.vb">
+      <DependentUpon>StageWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\StageWindow.Resizing.vb">
+      <DependentUpon>StageWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\StageWindow.TitleClick.vb">
+      <DependentUpon>StageWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\StageWindow.DetailsColumns.vb">
+      <DependentUpon>StageWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\StageWindow.TabFrame.vb">
+      <DependentUpon>StageWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\StageWindow.OpenDirection.vb">
+      <DependentUpon>StageWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\StageWindow.Kinds.vb">
+      <DependentUpon>StageWindow.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\RenameDialog.xaml.vb">
+      <DependentUpon>RenameDialog.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\TitleHeightDialog.xaml.vb">
+      <DependentUpon>TitleHeightDialog.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\BackgroundPictureDialog.xaml.vb">
+      <DependentUpon>BackgroundPictureDialog.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+    <Compile Include="Views\StageKindOptionsDialog.xaml.vb">
+      <DependentUpon>StageKindOptionsDialog.xaml</DependentUpon>
+      <SubType>Code</SubType>
+    </Compile>
+  </ItemGroup>
+  <!-- Images compiled into Stages.exe, loaded with "pack://application:,,,/Resources/..." URIs -->
+  <ItemGroup>
+    <Resource Include="Resources\Stages.ico" />
+    <Resource Include="Resources\StagesLogo.png" />
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="App.config" />
+    <None Include="app.manifest" />
+  </ItemGroup>
+  <Import Project="$(MSBuildToolsPath)\Microsoft.VisualBasic.targets" />
+</Project>
