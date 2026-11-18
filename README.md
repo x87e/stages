@@ -1,14 +1,12 @@
 # Stages
 An open source and free alternative to Stardock Fences with comparable functionality.
 
-**Clean up your workspace with Stage panels for your Windows desktop.** 
+**Clean up your desktop with Stages for Windows.** 
 
 - A Stage holds shortcuts to your files and folders.  It can also show a live folder, the windows you have open, or your clipboard history. Stages is free and open source, for Windows 10 and 11.
-
 - Stages began as a VB.NET/WPF rewrite of [NoFences](https://github.com/Twometer/NoFences) by Twometer. This application fixes some bugs that NoFences had and expands upon the idea with additional useful features.
 
-<!-- include a screenshot:
-![Stages on a Windows 11 desktop](screenshot.png) -->
+![Stages on a Windows 11 desktop](screenshot.jpg)
 
 ## Highlights
 
@@ -39,10 +37,11 @@ There's the full list of features **[here](FEATURES.md)**, and how everything wo
 
 1. Download `Stages-Setup-<version>.exe` from the [Releases](https://github.com/x87e/stages/releases) page.
 2. Run it. It installs for your Windows account only and doesn't ask for administrator rights.
-
-Windows may show **"Windows protected your PC"**, because the installer isn't code-signed. Choose **More info → Run anyway**.
+3. Use the Install option in Settings for proper installation which melts the executable to %localappdata%, adds persistence and a Start menu entry.
 
 Stages installs into `%LOCALAPPDATA%\Programs\Stages\App`. Your Stages and settings live beside it in that `Stages` folder and are left alone by upgrades. When you uninstall, you're asked whether to remove them too (the default is No); if you say Yes, they go to the Recycle Bin rather than being deleted for good.
+
+Windows may show **"Windows protected your PC"**, because the installer isn't code-signed. Choose **More info → Run anyway**.
 
 Only one copy of Stages runs at a time. To quit, right-click the Stages icon in the System Tray and choose **Quit Stages**.
 
@@ -58,19 +57,17 @@ Only one copy of Stages runs at a time. To quit, right-click the Stages icon in 
 
 ## Building from source
 
-Stages has no NuGet packages or other downloads: everything it uses is part of .NET Framework 4.8.
+Stages has no additional dependencies: everything it uses is part of .NET Framework 4.8.
 
 1. Install Visual Studio 2019 or 2022 with the **.NET desktop development** workload.
 2. Open `Stages.sln` and build (**Build → Build Solution**, Ctrl+Shift+B).
 3. The program is in `Stages\bin\Release\` (or `bin\Debug\`). `Stages.exe` can run from anywhere; it always keeps its Stages and settings in `%LOCALAPPDATA%\Programs\Stages`.
 
-To build the installer, build the **Release** configuration first, then compile `Installer\Stages.iss` with [Inno Setup 6](https://jrsoftware.org/isinfo.php). The installer appears in `Installer\Output\`.
-
 The code is commented throughout, aimed at readers who program but may not know VB.NET. The [user guide](USER-GUIDE.md#project-layout) has a map of the project.
 
 ## Status
 
-Stages is at version **0.8.3**. It's still before 1.0, so expect the odd rough edge. Bug reports and suggestions are welcome in [Issues](https://github.com/x87e/stages/issues). Please include your Windows version and, if something went wrong, the end of `%LOCALAPPDATA%\Programs\Stages\Logs\stages.log`.
+Stages is at version **0.8.9**. It's still before 1.0, so expect the odd rough edge. Bug reports and suggestions are welcome in [Issues](https://github.com/x87e/stages/issues). Please include your Windows version and if something went wrong, the end of `%LOCALAPPDATA%\Programs\Stages\Logs\stages.log`.
 
 ## Credits and licence
 
